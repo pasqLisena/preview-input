@@ -1,0 +1,368 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../iron-icon/iron-icon.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
+<link rel="import" href="../iron-icons/editor-icons.html">
+<link rel="import" href="../iron-image/iron-image.html">
+<link rel="import" href="../paper-fab/paper-fab.html">
+<link rel="import" href="../paper-button/paper-button.html">
+
+<!--
+An preview-input with preview.
+
+Example:
+
+    <preview-input></preview-input>
+
+@demo
+-->
+<dom-module id="preview-input">
+
+  <style>
+    :host {
+      display: block;
+      box-sizing: border-box;
+      border-radius: 0.3em;
+      font-family: 'Roboto', 'Noto', sans-serif;
+      -webkit-font-smoothing: antialiased;
+
+      width: var(--preview-input-width, 250px);
+      height: var(--preview-input-height, 150px);
+      background: var(--preview-input-background-color, #f5f5f5);
+      color: var(--preview-input-placeholder-color, #797979);
+
+      --accent-color: #4285f4;
+      --warning-color: #F44236;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+
+      --absolute-cover: {
+        display: block;
+        position: absolute;
+        top:0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+      }
+    }
+
+    .file-input-wrapper {
+      height: 100%;
+      width: 100%;
+
+      position: relative;
+      text-align: center;
+
+      -webkit-transition: all 200ms ease-in-out;
+      -moz-transition: all 200ms ease-in-out;
+      transition: all 200ms ease-in-out;
+    }
+    :host(:hover) .file-input-wrapper {
+      background: var(--accent-color);
+      color: #EBF3FE;
+    }
+    :host(:hover) paper-fab {
+      box-shadow: none;
+      transform: scale(3);
+      background: none;
+      opacity: 0.9;
+    }
+    #fileInput {
+      opacity: 0;
+      @apply(--absolute-cover);
+      cursor: pointer;
+    }
+    .file-input-wrapper:before {
+      content: "";
+      display: block;
+      height: 1px;
+      margin-bottom: -1px;
+    }
+    .file-input-wrapper paper-fab {
+      margin: 10% auto;
+      transform-origin: center center;
+      -webkit-transition: all 200ms ease-in-out, transform 500ms ease-in-out;
+      -moz-transition: all 200ms ease-in-out, transform 500ms ease-in-out;
+      transition: all 200ms ease-in-out, transform 500ms ease-in-out;
+    }
+    .file-input-wrapper p {
+      font-family: 'Roboto', 'Noto', sans-serif;
+      font-size: 14px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    iron-image {
+      @apply(--absolute-cover);
+      pointer-events: none;
+      background: #fff;
+    }
+    .overlay {
+      @apply(--absolute-cover);
+      opacity: 0;
+      background: rgba(0,0,0,.8);
+      border-radius: inherit;
+    }
+    .preview {
+      @apply(--absolute-cover);
+      background: #fff;
+      text-align: center;
+    }
+    .overlay span {
+      color: #fff;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+    }
+    :host(:hover) .overlay {
+      opacity: 1;
+    }
+    .file-preview {
+      width: 100%;
+      height: 100%;
+      background: #34A853;
+      position: relative;
+      color: rgba(255,255,255,0.85);
+    }
+    .file-preview iron-icon{
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      --iron-icon-width: 85%;
+      --iron-icon-height: 85%;
+    }
+    .file-preview p {
+      margin: 0px;
+      color: #34A853;
+      text-transform: uppercase;
+      font-weight: bold;
+      position: absolute;
+      top: 5em;
+      left: 0;
+      width: 100%;
+    }
+    .buttons {
+      position: absolute;
+      bottom:0;
+      left: 0;
+      width: 100%;
+
+      white-space: nowrap;
+      font-size: 0;
+      pointer-events: none;
+
+      transform: translateY(100%);
+
+      -webkit-transition: all 200ms ease-in-out;
+      -moz-transition: all 200ms ease-in-out;
+      transition: all 200ms ease-in-out;
+    }
+    .buttons paper-button{
+      background: var(--accent-color);
+      margin: 0;
+      color: #fff;
+      width: 50%;
+      font-size: 14px;
+      border-radius: 0;
+      pointer-events: none;
+    }
+    :host(:hover) .buttons {
+      transform: translateY(0);
+    }
+    .buttons paper-button.delete{
+      pointer-events: all;
+      background: var(--warning-color);
+    }
+  </style>
+
+  <template>
+
+    <div class="file-input-wrapper" hidden$="{{!!value}}">
+      <paper-fab icon="icons:file-upload"></paper-fab>
+      <p>{{placeholder}}</p>
+    </div>
+
+    <div class="preview" hidden$="{{!value}}">
+
+      <div class="file-preview" hidden$="{{!!_previewImg}}">
+        <iron-icon icon="editor:insert-drive-file"></iron-icon>
+        <p>{{_extractExtension(value)}}</p>
+      </div>
+
+      <iron-image fade preload src="{{_previewImg}}" hidden$="{{!_previewImg}}" sizing="cover"></iron-image>
+
+      <div class="overlay">
+        <span>{{file.name}}</span>
+      </div>
+
+    </div>
+
+    <input id="fileInput" type="file" accept="{{accept}}"></input>
+
+    <div class="buttons" hidden$="{{!value}}">
+      <paper-button>
+        <iron-icon icon="clear"></iron-icon> change
+      </paper-button>
+
+      <paper-button class="delete" on-click="clear">
+        <iron-icon icon="clear"></iron-icon> delete
+      </paper-button>
+    </div>
+
+  </template>
+
+
+  <script>
+
+    Polymer({
+      is: 'preview-input',
+      properties: {
+        /**
+        * A string rapresenting the file.<br>
+        * It corresponds to the value of an <code>&lt;input type="file"&gt;</code>.
+        * It can be set to a valid base-64 image or to a filename.
+        */
+        value: {
+          type: String,
+          value: "",
+          reflectToAttribute: true
+        },
+        /**
+        * The file as it comes from the <code>&lt;input type="file"&gt;</code>
+        */
+        file: {
+          type: Object,
+          value: function(){
+            return {};
+          }
+        },
+        /**
+        * Text to be displayed on the file input.
+        */
+        placeholder: {
+          type: String,
+          value: "Click or drop a file here"
+        },
+        /**
+        * Specifies the types of files that the input accepts.
+        * It corresponds to the accept of an <code>&lt;input type="file"&gt;</code>
+        */
+        accept: {
+          type: String,
+          reflectToAttribute: true
+        },
+        _previewImg : {
+          type: String,
+          value: null
+        }
+      },
+      listeners: {
+        'fileInput.change' : '_onFileChanged'
+      },
+
+      _extractExtension: function(value){
+        var splitted = value.split(".");
+        return splitted[splitted.length-1];
+      },
+      _onFileChanged: function(){
+        var $fileInput = this.$.fileInput;
+        if($fileInput.value == this.value) return;
+
+        if( !$fileInput.value ) {
+          this.value = '';
+          this.file = {};
+          this.fire('change', {value: this.value});
+          return;
+        }
+
+        this.file = $fileInput.files && $fileInput.files[0];
+        if(this.accept){
+          //if file is not acceptable
+          var accept = this.accept.replace( /\s/g, "" ).replace( /,/g, "|" );
+          if ( !this.file.type.match( new RegExp( "\\.?(" + accept + ")$", "i" ) ) ) {
+            this.value = '';
+            this.file = {};
+
+            console.warn('file not accepted')
+            //TODO error!
+            //not fire event change
+            return;
+          }
+        }
+
+        this.value = $fileInput.value;
+
+        this._createPreview();
+        this.fire('change', {value: this.value});
+      },
+      _createPreview: function(){
+        var elem = this;
+
+        //if file is not image
+        if(!this.file.type.match(/^image\//)) {
+          this._previewImg = '';
+          return;
+        } else {
+          //if file is image
+          var reader  = new FileReader();
+
+          reader.onloadend = function () {
+            var base64 = reader.result;
+            elem._previewImg = base64;
+          }
+
+          try {
+            reader.readAsDataURL(this.file);
+          } catch (e){
+            console.error(e);
+          }
+        }
+      },
+      /**
+      * Clear the input, setting its value to <code>""</code> (empty string).
+      *
+      */
+      clear: function() {
+        this.value = '';
+        this._previewImg = '';
+        this.$.inputFile.value = '';
+      },
+      ready: function() {
+        if(this.value) {
+          if(this.value.match(/^data:image/)){
+            this._previewImg = this.value;
+            this.file = {
+             name: 'IMAGE'
+            }
+            console.log(this.file)
+          } else {
+            this.file = {
+             name: this.value
+            }
+          }
+        }
+      }
+
+      /**
+      * The `change` event is fired whenever a valid file is chosen.<br><br>
+      * It is NOT fired when the file does not satisfy the "accept" attribute.<br>
+      * It is fired also if file is deleted
+      *
+      * @event change
+      * @detail {{value: String}}
+      */
+
+    });
+
+  </script>
+</dom-module>

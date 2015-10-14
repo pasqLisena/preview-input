@@ -1,0 +1,36 @@
+{
+  "name": "preview-input",
+  "authors": [
+    "Pasquale Lisena (pasq.lisena@gmail.com)"
+  ],
+  "description": "A preview-input with preview in Polymer.",
+  "keywords": [
+    "web-component",
+    "web-components",
+    "polymer",
+    "image",
+    "image-input",
+    "preview",
+    "file-input"
+  ],
+  "main": "preview-input.html",
+  "license": "http://polymer.github.io/LICENSE.txt",
+  "homepage": "https://github.com/pasqLisena/image-input/",
+  "ignore": [
+    "/.*",
+    "/test/",
+    "/demo/"
+  ],
+  "dependencies": {
+    "iron-icon": "PolymerElements/iron-icon#~1.0.5",
+    "iron-icons": "PolymerElements/iron-icons#~1.0.4",
+    "iron-image": "PolymerElements/iron-image#~1.0.2",
+    "paper-button": "PolymerElements/paper-button#~1.0.8",
+    "paper-fab": "PolymerElements/paper-fab#~1.0.5",
+    "polymer": "Polymer/polymer#^1.0.0"
+  },
+  "devDependencies": {
+    "iron-component-page": "PolymerElements/iron-component-page#^1.0.0",
+    "web-component-tester": "*"
+  }
+}
