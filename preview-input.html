@@ -194,12 +194,12 @@ Example:
 
     <div class="preview" hidden$="{{!value}}">
 
-      <div class="file-preview" hidden$="{{!!_previewImg}}">
+      <div class="file-preview" hidden$="{{!!previewImg}}">
         <iron-icon icon="editor:insert-drive-file"></iron-icon>
         <p>{{_extractExtension(value)}}</p>
       </div>
 
-      <iron-image fade preload src="{{_previewImg}}" hidden$="{{!_previewImg}}" sizing="cover"></iron-image>
+      <iron-image fade preload src="{{previewImg}}" hidden$="{{!previewImg}}" sizing="cover"></iron-image>
 
       <div class="overlay">
         <span>{{_file.name}}</span>
@@ -223,157 +223,138 @@ Example:
 
 
   <script>
+    (function(){
+      var URL = window.URL || window.webkitURL;
 
-    Polymer({
-      is: 'preview-input',
-      properties: {
-        /**
-        * A string rapresenting the file.<br>
-        * It corresponds to the value of an <code>&lt;input type="file"&gt;</code>.
-        * It can be set to a valid base-64 image or to a filename.
-        */
-        value: {
-          type: String,
-          value: "",
-          reflectToAttribute: true
-        },
-        /**
-        * The files array as it comes from the <code>&lt;input type="file"&gt;</code>
-        */
-        files: {
-          type: Array,
-          value: function(){
-            return [];
+      Polymer({
+        is: 'preview-input',
+        properties: {
+          /**
+          * A string rapresenting the file.<br>
+          * It corresponds to the value of an <code>&lt;input type="file"&gt;</code>.
+          * It can be set to a valid base-64 image, to a blob image or to a filename.
+          */
+          value: {
+            type: String,
+            value: "",
+            reflectToAttribute: true
+          },
+          /**
+          * The files array as it comes from the <code>&lt;input type="file"&gt;</code>
+          */
+          files: {
+            type: Array,
+            value: function(){
+              return [];
+            }
+          },
+          /**
+          * The first file of files (the one that will have a preview).
+          */
+          _file: {
+            type: Object,
+            computed: '_firstOfArray(files)'
+          },
+          /**
+          * Text to be displayed on the file input.
+          */
+          placeholder: {
+            type: String,
+            value: "Click or drop a file here"
+          },
+          /**
+          * Specifies the types of files that the input accepts.
+          * It corresponds to the accept of an <code>&lt;input type="file"&gt;</code>
+          */
+          accept: {
+            type: String,
+            reflectToAttribute: true
+          },
+          /**
+          * If the file is of type image/*, the preview of the image as blob.
+          */
+          previewImg : {
+            type: String,
+            value: null
           }
         },
-        /**
-        * The first file of files (the one that will have a preview).
-        */
-        _file: {
-          type: Object,
-          computed: '_firstOfArray(files)'
+        listeners: {
+          'fileInput.change' : '_onFileChanged'
         },
-        /**
-        * Text to be displayed on the file input.
-        */
-        placeholder: {
-          type: String,
-          value: "Click or drop a file here"
+        _firstOfArray: function(array){
+          return array[0];
         },
-        /**
-        * Specifies the types of files that the input accepts.
-        * It corresponds to the accept of an <code>&lt;input type="file"&gt;</code>
-        */
-        accept: {
-          type: String,
-          reflectToAttribute: true
+        _extractExtension: function(value){
+          var splitted = value.split(".");
+          return splitted[splitted.length-1];
         },
-        /**
-        * Preview of the image file in base-64.
-        */
-        _previewImg : {
-          type: String,
-          value: null
-        }
-      },
-      listeners: {
-        'fileInput.change' : '_onFileChanged'
-      },
-      _firstOfArray: function(array){
-        return array[0];
-      },
-      _extractExtension: function(value){
-        var splitted = value.split(".");
-        return splitted[splitted.length-1];
-      },
-      _onFileChanged: function(){
-        var $fileInput = this.$.fileInput;
-        if($fileInput.value == this.value) return;
+        _onFileChanged: function(){
+          var $fileInput = this.$.fileInput;
+          if($fileInput.value == this.value) return;
 
-        if( !$fileInput.value ) {
-          this.value = '';
-          this._file = {};
-          this.fire('change', {value: this.value});
-          return;
-        }
-        this.files = $fileInput.files;
-        if(this.accept){
-          //if file is not acceptable
-          var accept = this.accept.replace( /\s/g, "" ).replace( /,/g, "|" );
-          if ( !this._file.type.match( new RegExp( "\\.?(" + accept + ")$", "i" ) ) ) {
+          if( !$fileInput.value ) {
             this.value = '';
-            this._file = {};
-
-            console.warn('file not accepted')
-            //TODO error!
-            //not fire event change
+            this.files = [];
+            this.fire('change', {value: this.value});
             return;
           }
-        }
-
-        this.value = $fileInput.value;
-
-        this._createPreview();
-        this.fire('change', {value: this.value});
-      },
-      _createPreview: function(){
-        var elem = this;
-
-        //if file is not image
-        if(!this._file.type.match(/^image\//)) {
-          this._previewImg = '';
-          return;
-        } else {
-          //if file is image
-          var reader  = new FileReader();
-
-          reader.onloadend = function () {
-            var base64 = reader.result;
-            elem._previewImg = base64;
-          }
-
-          try {
-            reader.readAsDataURL(this._file);
-          } catch (e){
-            console.error(e);
-          }
-        }
-      },
-      /**
-      * Clear the input, setting its value to <code>""</code> (empty string).
-      *
-      */
-      clear: function() {
-        this.value = '';
-        this._previewImg = '';
-        this.$.inputFile.value = '';
-      },
-      ready: function() {
-        if(this.value) {
-          if(this.value.match(/^data:image/)){
-            this._previewImg = this.value;
-            this._file = {
-             name: 'IMAGE'
+          if(this.accept){
+            var file0 = $fileInput.files[0];
+            //if file is not acceptable
+            var accept = this.accept.replace( /\s/g, "" ).replace( /,/g, "|" );
+            if ( !file0.type.match( new RegExp( "\\.?(" + accept + ")$", "i" ) ) ) {
+              console.warn('file not accepted')
+              //TODO error!
+              //not fire event change
+              return;
             }
-            console.log(this._file)
-          } else {
-            this._file = {
-             name: this.value
+          }
+
+          this.files = $fileInput.files;
+          this.value = $fileInput.value;
+
+          var elem = this;
+          var isFileAnImage = this._file.type.match(/^image\//);
+          this.previewImg = isFileAnImage ? URL.createObjectURL(this._file) : '';
+          this.fire('change', {value: this.value});
+        },
+        /**
+        * Clear the input, setting its value to <code>""</code> (empty string).
+        *
+        */
+        clear: function() {
+          this.value = '';
+          this.files = [];
+          this.previewImg = '';
+          this.$.fileInput.value = '';
+          this.fire('change', {value: ''});
+        },
+        attached: function() {
+          if(this.value) {
+            if(this.value.match(/^(data:image|blob:)/)){
+
+              this.previewImg = this.value;
+              this.files = [{
+                name: '...from cache...'
+              }];
+            } else {
+              this.files = [{
+                name: this.value
+              }];
             }
           }
         }
-      }
+        /**
+        * The `change` event is fired whenever a valid file is chosen.<br><br>
+        * It is NOT fired when the file does not satisfy the "accept" attribute.<br>
+        * It is fired also if file is deleted
+        *
+        * @event change
+        * @detail {{value: String}}
+        */
 
-      /**
-      * The `change` event is fired whenever a valid file is chosen.<br><br>
-      * It is NOT fired when the file does not satisfy the "accept" attribute.<br>
-      * It is fired also if file is deleted
-      *
-      * @event change
-      * @detail {{value: String}}
-      */
+      });
 
-    });
-
+    })();
   </script>
 </dom-module>
