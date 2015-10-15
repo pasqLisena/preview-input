@@ -3,7 +3,7 @@
   "authors": [
     "Pasquale Lisena (pasq.lisena@gmail.com)"
   ],
-  "description": "A preview-input with preview in Polymer.",
+  "description": "A file-input with preview in Polymer.",
   "keywords": [
     "web-component",
     "web-components",

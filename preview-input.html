@@ -16,7 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../paper-button/paper-button.html">
 
 <!--
-An preview-input with preview.
+A file input with preview.
 
 Example:
 
@@ -202,7 +202,7 @@ Example:
       <iron-image fade preload src="{{_previewImg}}" hidden$="{{!_previewImg}}" sizing="cover"></iron-image>
 
       <div class="overlay">
-        <span>{{file.name}}</span>
+        <span>{{_file.name}}</span>
       </div>
 
     </div>
@@ -238,13 +238,20 @@ Example:
           reflectToAttribute: true
         },
         /**
-        * The file as it comes from the <code>&lt;input type="file"&gt;</code>
+        * The files array as it comes from the <code>&lt;input type="file"&gt;</code>
         */
-        file: {
-          type: Object,
+        files: {
+          type: Array,
           value: function(){
-            return {};
+            return [];
           }
+        },
+        /**
+        * The first file of files (the one that will have a preview).
+        */
+        _file: {
+          type: Object,
+          computed: '_firstOfArray(files)'
         },
         /**
         * Text to be displayed on the file input.
@@ -261,6 +268,9 @@ Example:
           type: String,
           reflectToAttribute: true
         },
+        /**
+        * Preview of the image file in base-64.
+        */
         _previewImg : {
           type: String,
           value: null
@@ -269,7 +279,9 @@ Example:
       listeners: {
         'fileInput.change' : '_onFileChanged'
       },
-
+      _firstOfArray: function(array){
+        return array[0];
+      },
       _extractExtension: function(value){
         var splitted = value.split(".");
         return splitted[splitted.length-1];
@@ -280,18 +292,17 @@ Example:
 
         if( !$fileInput.value ) {
           this.value = '';
-          this.file = {};
+          this._file = {};
           this.fire('change', {value: this.value});
           return;
         }
-
-        this.file = $fileInput.files && $fileInput.files[0];
+        this.files = $fileInput.files;
         if(this.accept){
           //if file is not acceptable
           var accept = this.accept.replace( /\s/g, "" ).replace( /,/g, "|" );
-          if ( !this.file.type.match( new RegExp( "\\.?(" + accept + ")$", "i" ) ) ) {
+          if ( !this._file.type.match( new RegExp( "\\.?(" + accept + ")$", "i" ) ) ) {
             this.value = '';
-            this.file = {};
+            this._file = {};
 
             console.warn('file not accepted')
             //TODO error!
@@ -309,7 +320,7 @@ Example:
         var elem = this;
 
         //if file is not image
-        if(!this.file.type.match(/^image\//)) {
+        if(!this._file.type.match(/^image\//)) {
           this._previewImg = '';
           return;
         } else {
@@ -322,7 +333,7 @@ Example:
           }
 
           try {
-            reader.readAsDataURL(this.file);
+            reader.readAsDataURL(this._file);
           } catch (e){
             console.error(e);
           }
@@ -341,12 +352,12 @@ Example:
         if(this.value) {
           if(this.value.match(/^data:image/)){
             this._previewImg = this.value;
-            this.file = {
+            this._file = {
              name: 'IMAGE'
             }
-            console.log(this.file)
+            console.log(this._file)
           } else {
-            this.file = {
+            this._file = {
              name: this.value
             }
           }
